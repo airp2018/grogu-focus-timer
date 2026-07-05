@@ -1,0 +1,71 @@
+{
+  "manifest_version": 3,
+  "name": "Grogu Focus Timer (古古原力专注助理)",
+  "version": "1.0",
+  "description": "一个曼达洛人主题的时间管理和专注助理插件。古古会在专注结束、休息结束或访问分心网站时，以奶声奶气的“NO”和可爱动效阻止并提醒你！",
+  "permissions": [
+    "storage",
+    "alarms",
+    "offscreen",
+    "activeTab",
+    "scripting",
+    "tabs",
+    "sidePanel"
+  ],
+  "icons": {
+    "16": "assets/icons/icon-16.png",
+    "32": "assets/icons/icon-32.png",
+    "48": "assets/icons/icon-48.png",
+    "128": "assets/icons/icon-128.png"
+  },
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "Open Grogu Focus Timer",
+    "default_icon": {
+      "16": "assets/icons/icon-16.png",
+      "32": "assets/icons/icon-32.png",
+      "48": "assets/icons/icon-48.png",
+      "128": "assets/icons/icon-128.png"
+    }
+  },
+  "side_panel": {
+    "default_path": "popup.html"
+  },
+  "commands": {
+    "summon-grogu": {
+      "suggested_key": {
+        "default": "Alt+Shift+G"
+      },
+      "description": "Summon Grogu"
+    }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "assets/*"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "css": [
+        "content.css"
+      ],
+      "run_at": "document_end"
+    }
+  ]
+}

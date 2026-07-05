@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Grogu Focus Timer</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <div class="logo-area">
+        <div class="grogu-icon-mini"></div>
+        <h1>原力专注 <span>GROGU</span></h1>
+      </div>
+      <div class="status-indicator" id="status-text">就绪</div>
+    </header>
+
+    <!-- Timer Dashboard -->
+    <section class="timer-section">
+      <div class="timer-circle">
+        <div class="timer-inner">
+          <div class="timer-label" id="timer-mode">专注时间</div>
+          <div class="timer-time" id="timer-display">25:00</div>
+          <div class="timer-progress-bg"></div>
+        </div>
+      </div>
+      
+      <!-- Controls -->
+      <div class="controls-row">
+        <button id="start-btn" class="btn btn-primary">开启原力</button>
+        <button id="pause-btn" class="btn btn-secondary" disabled>暂停</button>
+        <button id="reset-btn" class="btn btn-outline">重置</button>
+      </div>
+    </section>
+
+    <!-- Settings Tabs -->
+    <section class="settings-section">
+      <div class="settings-header">配置面板</div>
+      
+      <div class="form-group">
+        <label>专注时长 (分钟)</label>
+        <input type="number" id="focus-time-input" min="1" max="120" value="25">
+      </div>
+
+      <div class="form-group">
+        <label>休息时长 (分钟)</label>
+        <input type="number" id="break-time-input" min="1" max="60" value="5">
+      </div>
+
+      <div class="form-group">
+        <label>我当前要做的任务 (当前专注内容)</label>
+        <input type="text" id="task-input" value="写代码" placeholder="例如：写代码、写论文、看书">
+      </div>
+
+      <div class="form-group">
+        <label>默认分心黑名单</label>
+        <div class="blacklist-grid">
+          <label><input type="checkbox" class="default-blacklist-toggle" value="video"> 视频/短剧</label>
+          <label><input type="checkbox" class="default-blacklist-toggle" value="social"> 社交媒体</label>
+          <label><input type="checkbox" class="default-blacklist-toggle" value="shorts"> 短视频关键词</label>
+          <label><input type="checkbox" class="default-blacklist-toggle" value="games"> 游戏/直播</label>
+          <label><input type="checkbox" class="default-blacklist-toggle" value="forums"> 论坛热点</label>
+          <label><input type="checkbox" class="default-blacklist-toggle" value="shopping"> 购物网站</label>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>自定义分心关键词 / 正则 (一行一个)</label>
+        <textarea id="distraction-patterns-input" rows="4" placeholder="youtube.com&#10;bilibili.com&#10;.*shorts.*"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>劝阻提示语 (当你想偷懒分心时)</label>
+        <input type="text" id="block-msg-input" value="Mando, 快回去工作！这不是正道！">
+      </div>
+      
+      <div class="form-group toggle-group">
+        <label for="blocker-toggle">启用分心自动劝阻 (YES / NO 联动)</label>
+        <input type="checkbox" id="blocker-toggle" checked>
+      </div>
+
+      <div class="form-group toggle-group">
+        <label for="sound-toggle">启用声音提醒</label>
+        <input type="checkbox" id="sound-toggle" checked>
+      </div>
+
+      <button id="save-settings-btn" class="btn btn-save">保存并更新配置</button>
+    </section>
+
+    <!-- Emotional Events Test Panel -->
+    <section class="settings-section test-panel">
+      <div class="settings-header">召唤古古</div>
+      <p class="test-hint">点击左侧召唤。全局召唤：Alt+Shift+G；右侧是网页内快捷键（chrome:// 页面不可用）。</p>
+      <div class="summon-list">
+        <div class="summon-row">
+          <button id="ev-cookie1" class="btn btn-event" data-asset="cookie1" title="古古吃马卡龙">🍪 吃点马卡龙吧</button>
+          <button class="btn-shortcut" data-asset="cookie1" title="点击设置快捷键">点击设置快捷键</button>
+        </div>
+        <div class="summon-row">
+          <button id="ev-cookie2" class="btn btn-event" data-asset="cookie2" title="古古再吃蓝马卡龙">🍬 再吃点马卡龙</button>
+          <button class="btn-shortcut" data-asset="cookie2" title="点击设置快捷键">点击设置快捷键</button>
+        </div>
+        <div class="summon-row">
+          <button id="ev-meat"    class="btn btn-event" data-asset="meat"    title="古古吃烤龙肉">🍖 吃点龙肉吧</button>
+          <button class="btn-shortcut" data-asset="meat" title="点击设置快捷键">点击设置快捷键</button>
+        </div>
+        <div class="summon-row">
+          <button id="ev-eggs"    class="btn btn-event" data-asset="eggs"    title="你还好意思吃">🐸 你还好意思吃</button>
+          <button class="btn-shortcut" data-asset="eggs" title="点击设置快捷键">点击设置快捷键</button>
+        </div>
+        <div class="summon-row">
+          <button id="ev-peek"    class="btn btn-event" data-asset="peek"    title="偷偷瞅你一眼">👀 偷偷瞅你一眼</button>
+          <button class="btn-shortcut" data-asset="peek" title="点击设置快捷键">点击设置快捷键</button>
+        </div>
+        <div class="summon-row">
+          <button id="ev-fagong"  class="btn btn-event" data-asset="fagong"  title="古古发功">✨ 发功</button>
+          <button class="btn-shortcut" data-asset="fagong" title="点击设置快捷键">点击设置快捷键</button>
+        </div>
+        <div class="summon-row">
+          <button id="ev-zhaoshou" class="btn btn-event" data-asset="zhaoshou" title="古古向你招手">👋 招招手</button>
+          <button class="btn-shortcut" data-asset="zhaoshou" title="点击设置快捷键">点击设置快捷键</button>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>
