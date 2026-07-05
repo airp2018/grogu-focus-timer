@@ -15,6 +15,7 @@ const taskInput = document.getElementById('task-input');
 const distractionPatternsInput = document.getElementById('distraction-patterns-input');
 const defaultBlacklistToggles = document.querySelectorAll('.default-blacklist-toggle');
 const blockMsgInput = document.getElementById('block-msg-input');
+const welcomeMsgInput = document.getElementById('welcome-msg-input');
 const blockerToggle = document.getElementById('blocker-toggle');
 const soundToggle = document.getElementById('sound-toggle');
 const saveSettingsBtn = document.getElementById('save-settings-btn');
@@ -44,7 +45,8 @@ const I18N_DATA = {
     blacklist_forums: '论坛热点',
     blacklist_shopping: '购物网站',
     custom_blacklist_label: '自定义分心关键词 / 正则 (一行一个)',
-    block_msg_label: '劝阻提示语 (当你想偷懒分心时)',
+    block_msg_label: 'NO 自定义提示语 (当你想偷懒分心时)',
+    welcome_msg_label: 'YES 自定义提示语 (当你回到工作页面时)',
     blocker_toggle_label: '启用分心自动劝阻 (YES / NO 联动)',
     sound_toggle_label: '启用声音提醒',
     btn_save: '保存并更新配置',
@@ -86,7 +88,8 @@ const I18N_DATA = {
     blacklist_forums: 'Forums / Hot Topics',
     blacklist_shopping: 'Shopping Sites',
     custom_blacklist_label: 'Custom Distraction Keywords / RegEx (one per line)',
-    block_msg_label: 'Distraction Alert Message (when slacking)',
+    block_msg_label: 'NO Custom Alert Message (when slacking)',
+    welcome_msg_label: 'YES Custom Welcome Message (when returning to work)',
     blocker_toggle_label: 'Enable Auto-Blocker & Warnings (YES/NO)',
     sound_toggle_label: 'Enable Sound Effects',
     btn_save: 'Save Settings',
@@ -125,6 +128,7 @@ const I18N_MAP = {
   'lbl-blacklist-shopping': 'blacklist_shopping',
   'custom-blacklist-label': 'custom_blacklist_label',
   'block-msg-label': 'block_msg_label',
+  'welcome-msg-label': 'welcome_msg_label',
   'blocker-toggle-label': 'blocker_toggle_label',
   'sound-toggle-label': 'sound_toggle_label',
   'save-settings-btn': 'btn_save',
@@ -345,10 +349,16 @@ function changeLanguage(newLang) {
         blockMsgInput.value.trim() === 'Mando, 快回去工作！这不是正道！') {
       blockMsgInput.value = 'Mando, get back to work! This is not the way!';
     }
+    if (welcomeMsgInput.value.trim() === 'Mando, 欢迎回来！This is the way.') {
+      welcomeMsgInput.value = 'Mando, welcome back! This is the way.';
+    }
   } else {
     if (taskInput.value.trim() === 'Coding') taskInput.value = '写代码';
     if (blockMsgInput.value.trim() === 'Mando, get back to work! This is not the way!') {
-      blockMsgInput.value = 'Mando, 快回去工作！环境这不是正道！';
+      blockMsgInput.value = 'Mando, 快回去工作！这不是正道！';
+    }
+    if (welcomeMsgInput.value.trim() === 'Mando, welcome back! This is the way.') {
+      welcomeMsgInput.value = 'Mando, 欢迎回来！This is the way.';
     }
   }
   
@@ -367,7 +377,8 @@ function loadSettings() {
     task: '写代码',
     distractionPatterns: '',
     enabledDefaultDistractions: ['video', 'social', 'shorts'],
-    blockMsg: 'Mando, 快回去工作！环境这不是正道！',
+    blockMsg: 'Mando, 快回去工作！这不是正道！',
+    welcomeMsg: 'Mando, 欢迎回来！This is the way.',
     blockerEnabled: true,
     soundEnabled: true,
     lang: 'zh'
@@ -383,6 +394,7 @@ function loadSettings() {
       toggle.checked = items.enabledDefaultDistractions.includes(toggle.value);
     });
     blockMsgInput.value = items.blockMsg;
+    welcomeMsgInput.value = items.welcomeMsg;
     blockerToggle.checked = items.blockerEnabled;
     soundToggle.checked = items.soundEnabled;
   });
@@ -398,6 +410,7 @@ function saveSettings() {
     .filter(toggle => toggle.checked)
     .map(toggle => toggle.value);
   const blockMsgVal = blockMsgInput.value;
+  const welcomeMsgVal = welcomeMsgInput.value;
   const blockerVal = blockerToggle.checked;
   const soundVal = soundToggle.checked;
 
@@ -408,6 +421,7 @@ function saveSettings() {
     distractionPatterns: distractionPatternsVal,
     enabledDefaultDistractions: enabledDefaultDistractionsVal,
     blockMsg: blockMsgVal,
+    welcomeMsg: welcomeMsgVal,
     blockerEnabled: blockerVal,
     soundEnabled: soundVal,
     lang: currentLang

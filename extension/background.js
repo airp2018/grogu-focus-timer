@@ -13,6 +13,7 @@ let config = {
   distractionPatterns: '',
   enabledDefaultDistractions: ['video', 'social', 'shorts'],
   blockMsg: 'Mando, 快回去工作！环境这不是正道！',
+  welcomeMsg: 'Mando, 欢迎回来！This is the way.',
   blockerEnabled: true,
   soundEnabled: true,
   lang: 'zh'
@@ -55,13 +56,11 @@ const RANDOM_EVENTS_EN = [
 const NOTIFICATIONS = {
   zh: {
     focus_ended: 'Mando, 专注时间结束啦！来喝口热汤休息一下！',
-    break_ended: '休息时间结束！原力与你同在，开始工作！',
-    welcome_back: 'Mando, 欢迎回来！This is the way.'
+    break_ended: '休息时间结束！原力与你同在，开始工作！'
   },
   en: {
     focus_ended: 'Mando, focus session completed! Time to drink some soup and take a break! 🍲',
-    break_ended: 'Break session completed! May the Force be with you, back to work! 🚀',
-    welcome_back: 'Mando, welcome back! This is the way.'
+    break_ended: 'Break session completed! May the Force be with you, back to work! 🚀'
   }
 };
 let initPromise = null;
@@ -115,6 +114,7 @@ function init() {
     distractionPatterns: '',
     enabledDefaultDistractions: ['video', 'social', 'shorts'],
     blockMsg: 'Mando, 快回去工作！环境这不是正道！',
+    welcomeMsg: 'Mando, 欢迎回来！This is the way.',
     blockerEnabled: true,
     soundEnabled: true,
     lang: 'zh',
@@ -126,6 +126,7 @@ function init() {
     config.distractionPatterns = items.distractionPatterns;
     config.enabledDefaultDistractions = items.enabledDefaultDistractions;
     config.blockMsg = items.blockMsg;
+    config.welcomeMsg = items.welcomeMsg;
     config.blockerEnabled = items.blockerEnabled;
     config.soundEnabled = items.soundEnabled;
     config.lang = items.lang || 'zh';
@@ -297,6 +298,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       distractionPatterns: '',
       enabledDefaultDistractions: ['video', 'social', 'shorts'],
       blockMsg: 'Mando, 快回去工作！环境这不是正道！',
+      welcomeMsg: 'Mando, 欢迎回来！This is the way.',
       blockerEnabled: true,
       soundEnabled: true,
       lang: 'zh'
@@ -307,6 +309,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       config.distractionPatterns = items.distractionPatterns;
       config.enabledDefaultDistractions = items.enabledDefaultDistractions;
       config.blockMsg = items.blockMsg;
+      config.welcomeMsg = items.welcomeMsg;
       config.blockerEnabled = items.blockerEnabled;
       config.soundEnabled = items.soundEnabled;
       config.lang = items.lang || 'zh';
@@ -427,11 +430,10 @@ chrome.windows.onFocusChanged.addListener((windowId) => {
         if (category === 'neutral') {
           activeBlockerTabs.delete(tabs[0].id);
           if (isDistracted) {
-            console.log('[Blocker] Returned to non-blocklisted tab. Triggering YES.');
+            console.log(`[Blocker] Switched to non-blocklisted tab ${tabs[0].id}. Triggering YES.`);
             isDistracted = false;
             playAudio('assets/YES.m4a');
-            const lang = config.lang || 'zh';
-            const welcomeMsg = lang === 'en' ? NOTIFICATIONS.en.welcome_back : NOTIFICATIONS.zh.welcome_back;
+            const welcomeMsg = config.welcomeMsg || 'Mando, 欢迎回来！This is the way.';
             sendTabMessage(tabs[0].id, {
               type: 'INJECT_NOTIFICATION',
               asset: 'YES',
@@ -460,14 +462,6 @@ chrome.windows.onFocusChanged.addListener((windowId) => {
   }
 });
 
-function checkActiveTabBlock() {
-  chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
-    if (tabs && tabs[0] && tabs[0].url) {
-      checkAndApplyTabBlock(tabs[0].id, tabs[0].url, tabs[0].title || '');
-    }
-  });
-}
-
 function checkAndApplyTabBlock(tabId, url, title) {
   if (!config.blockerEnabled || timerState.mode !== 'focus' || !timerState.isRunning) {
     return;
@@ -483,8 +477,7 @@ function checkAndApplyTabBlock(tabId, url, title) {
         console.log(`[Blocker] Switched to non-blocklisted tab ${tabId} (${url}). Triggering YES.`);
         isDistracted = false;
         playAudio('assets/YES.m4a');
-        const lang = config.lang || 'zh';
-        const welcomeMsg = lang === 'en' ? NOTIFICATIONS.en.welcome_back : NOTIFICATIONS.zh.welcome_back;
+        const welcomeMsg = config.welcomeMsg || 'Mando, 欢迎回来！This is the way.';
         sendTabMessage(tabId, {
           type: 'INJECT_NOTIFICATION',
           asset: 'YES',
