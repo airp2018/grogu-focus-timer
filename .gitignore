@@ -1,7 +1,8 @@
 # Ignore everything by default
 /*
 
-# Whitelist README, .gitignore, and the extension directory
+# Whitelist READMEs, .gitignore, and the extension directory
 !/README.md
+!/README_en.md
 !/.gitignore
 !/extension/

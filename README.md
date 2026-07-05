@@ -1,4 +1,8 @@
-# 尤达宝宝时间管理
+# 尤达宝宝时间管理 (Grogu Focus Timer)
+
+<p align="center">
+  <strong>简体中文</strong> | <a href="./README_en.md">English</a>
+</p>
 
 <p align="center">
   <img src="./extension/assets/zhaoshou_cradle.webp" width="260" alt="古古时间管理助手 - 招手摇篮动图">
