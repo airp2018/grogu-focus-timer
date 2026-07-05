@@ -345,20 +345,32 @@ function changeLanguage(newLang) {
   // Auto translate defaults to respect language choices
   if (newLang === 'en') {
     if (taskInput.value.trim() === '写代码') taskInput.value = 'Coding';
-    if (blockMsgInput.value.trim() === 'Mando, 快回去工作！环境这不是正道！' || 
-        blockMsgInput.value.trim() === 'Mando, 快回去工作！这不是正道！') {
+    
+    // Auto-translate NO blockMsg variants
+    const currentBlockVal = blockMsgInput.value.trim();
+    if (currentBlockVal === 'Mando, 快回去工作！环境这不是正道！' || 
+        currentBlockVal === 'Mando, 快回去工作！这不是正道！' ||
+        currentBlockVal === 'Mando, 回去工作，这不是正道' ||
+        currentBlockVal === 'Mando, 回去工作，这不是正道.') {
       blockMsgInput.value = 'Mando, get back to work! This is not the way!';
     }
-    if (welcomeMsgInput.value.trim() === 'Mando, 欢迎回来！This is the way.') {
+    
+    // Auto-translate YES welcomeMsg variants
+    const currentWelcomeVal = welcomeMsgInput.value.trim();
+    if (currentWelcomeVal === 'Mando, 欢迎回来！This is the way.' ||
+        currentWelcomeVal === 'Mando, 欢迎回来，This is the way.' ||
+        currentWelcomeVal === 'Mando, 欢迎回来，This is the way') {
       welcomeMsgInput.value = 'Mando, welcome back! This is the way.';
     }
   } else {
     if (taskInput.value.trim() === 'Coding') taskInput.value = '写代码';
+    
+    // Auto-translate back to Chinese
     if (blockMsgInput.value.trim() === 'Mando, get back to work! This is not the way!') {
-      blockMsgInput.value = 'Mando, 快回去工作！这不是正道！';
+      blockMsgInput.value = 'Mando, 回去工作，这不是正道.';
     }
     if (welcomeMsgInput.value.trim() === 'Mando, welcome back! This is the way.') {
-      welcomeMsgInput.value = 'Mando, 欢迎回来！This is the way.';
+      welcomeMsgInput.value = 'Mando, 欢迎回来，This is the way.';
     }
   }
   
@@ -377,8 +389,8 @@ function loadSettings() {
     task: '写代码',
     distractionPatterns: '',
     enabledDefaultDistractions: ['video', 'social', 'shorts'],
-    blockMsg: 'Mando, 快回去工作！这不是正道！',
-    welcomeMsg: 'Mando, 欢迎回来！This is the way.',
+    blockMsg: 'Mando, 回去工作，这不是正道.',
+    welcomeMsg: 'Mando, 欢迎回来，This is the way.',
     blockerEnabled: true,
     soundEnabled: true,
     lang: 'zh'
