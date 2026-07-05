@@ -1,7 +1,7 @@
 # 尤达宝宝时间管理
 
 <p align="center">
-  <img src="./extension/assets/zhaoshou.webp" width="260" alt="古古电子宠物招手">
+  <img src="./extension/assets/zhaoshou_cradle.webp" width="260" alt="古古时间管理助手 - 招手摇篮动图">
 </p>
 
 <p align="center">

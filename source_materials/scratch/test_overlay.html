@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Test Grogu Overlay</title>
+  <link rel="stylesheet" href="../extension/content.css">
+  <style>
+    body {
+      background: #333;
+      height: 100vh;
+      margin: 0;
+      overflow: hidden;
+    }
+  </style>
+</head>
+<body>
+  <h1>Testing Grogu Overlay</h1>
+  <button id="test-yes" style="padding: 10px; margin: 10px;">Test YES</button>
+  <button id="test-no" style="padding: 10px; margin: 10px;">Test NO</button>
+  <button id="test-cookie" style="padding: 10px; margin: 10px;">Test Cookie</button>
+
+  <script>
+    // Mock chrome extension environment
+    window.chrome = {
+      runtime: {
+        getURL: function(path) {
+          // Point to local assets folder (up one level to extension/assets)
+          return "../extension/" + path;
+        }
+      }
+    };
+  </script>
+  <script src="../extension/content.js"></script>
+  <script>
+    document.getElementById('test-yes').addEventListener('click', () => {
+      createGroguAssistant('YES', 'Mando, 欢迎回来！This is the way.');
+    });
+    document.getElementById('test-no').addEventListener('click', () => {
+      createGroguAssistant('NO', 'Mando, 快回去工作！这不是正道！');
+    });
+    document.getElementById('test-cookie').addEventListener('click', () => {
+      createGroguAssistant('cookie1', '哇，古古在啃零食！');
+    });
+  </script>
+</body>
+</html>
