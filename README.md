@@ -88,3 +88,9 @@ grogu-focus-timer/
 ## 注意
 
 本项目仅用于个人学习和原型实验。角色风格和素材灵感来自流行文化中的可爱外星宝宝形象；如果用于公开发布或商店上架，建议替换为原创角色、原创名称和原创素材。
+
+
+
+<p align="center">
+  <img src="./extension/assets/grogu_companion_poster.png" width="600" alt="古古原力专注助理海报">
+</p>
