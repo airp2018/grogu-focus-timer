@@ -12,7 +12,7 @@ let config = {
   task: '写代码',
   distractionPatterns: '',
   enabledDefaultDistractions: ['video', 'social', 'shorts'],
-  blockMsg: 'Mando, 快回去工作！这不是正道！',
+  blockMsg: 'Mando, 快回去工作！环境这不是正道！',
   blockerEnabled: true,
   soundEnabled: true,
   lang: 'zh'
@@ -114,7 +114,7 @@ function init() {
     task: '写代码',
     distractionPatterns: '',
     enabledDefaultDistractions: ['video', 'social', 'shorts'],
-    blockMsg: 'Mando, 快回去工作！这不是正道！',
+    blockMsg: 'Mando, 快回去工作！环境这不是正道！',
     blockerEnabled: true,
     soundEnabled: true,
     lang: 'zh',
@@ -187,6 +187,7 @@ function getTabRelevanceCategory(url, title) {
     : 'neutral';
 }
 
+// Get full list of distraction regex patterns
 function getDistractionPatterns() {
   const defaultPatterns = (config.enabledDefaultDistractions || [])
     .flatMap(group => DEFAULT_DISTRACTION_GROUPS[group] || []);
@@ -292,7 +293,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       task: '写代码',
       distractionPatterns: '',
       enabledDefaultDistractions: ['video', 'social', 'shorts'],
-      blockMsg: 'Mando, 快回去工作！这不是正道！',
+      blockMsg: 'Mando, 快回去工作！环境这不是正道！',
       blockerEnabled: true,
       soundEnabled: true,
       lang: 'zh'
@@ -319,25 +320,20 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 // ─── Random Emotional Event Scheduler ───────────────────────────────────────
-// Fires a surprise Grogu clip every 5–10 minutes during a focus session
 function scheduleNextRandomEvent() {
   stopRandomEventScheduler();
   if (!timerState.isRunning || timerState.mode !== 'focus') return;
 
-  // Scale delay based on the configured focus duration for developer/tester friendliness
   let delayMinutes;
   if (config.focusDuration <= 2) {
-    // 1-2 mins focus: trigger every 15-40 seconds
     delayMinutes = 0.25 + Math.random() * 0.4;
   } else if (config.focusDuration <= 10) {
-    // 3-10 mins focus: trigger every 1-2 minutes
     delayMinutes = 1 + Math.random() * 1;
   } else {
-    // Normal focus: trigger every 5-10 minutes
     delayMinutes = 5 + Math.random() * 5;
   }
 
-  console.log(`[RandomEvent] Next event scheduled in ${delayMinutes.toFixed(2)} min(s) (Focus duration: ${config.focusDuration} min).`);
+  console.log(`[RandomEvent] Next event scheduled in ${delayMinutes.toFixed(2)} min(s).`);
   chrome.alarms.create('grogu_random_event', { delayInMinutes: delayMinutes });
 }
 
@@ -350,9 +346,8 @@ function triggerRandomEvent(event) {
   playAudio(`assets/${event.asset}.m4a`);
   injectOverlayToActiveTab(event.asset, event.message, { motion: 'drift' });
 }
-// ─────────────────────────────────────────────────────────────────────────────
 
-// Alarm Listener (when timer ends & random events fire)
+// Alarm Listener
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === 'grogu_alarm') {
     timerState.isRunning = false;
@@ -368,6 +363,125 @@ chrome.alarms.onAlarm.addListener((alarm) => {
       
       timerState.mode = 'break';
       timerState.timeLeft = config.breakDuration * 60;
+    } else {
+      console.log('Break completed! Triggering focus warning.');
+      playAudio('assets/force.m4a');
+      const lang = config.lang || 'zh';
+      const msg = lang === 'en' ? NOTIFICATIONS.en.break_ended : NOTIFICATIONS.zh.break_ended;
+      injectOverlayToActiveTab('force', msg);
+      
+      timerState.mode = 'focus';
+      timerState.timeLeft = config.focusDuration * 60;
+    }
+    
+    saveState();
+    chrome.runtime.sendMessage({ type: 'TIMER_TICK', state: timerState });
+  } else if (alarm.name === 'grogu_random_event') {
+    if (timerState.isRunning && timerState.mode === 'focus') {
+      const list = (config.lang === 'en') ? RANDOM_EVENTS_EN : RANDOM_EVENTS_ZH;
+      const event = list[Math.floor(Math.random() * list.length)];
+      triggerRandomEvent(event);
+      scheduleNextRandomEvent();
+    }
+  }
+});
+
+// Browser tab navigation listeners
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  if (changeInfo.status === 'loading') {
+    activeBlockerTabs.delete(tabId);
+    return;
+  }
+  if (tab.status === 'complete' && (changeInfo.status === 'complete' || changeInfo.url) && tab.url) {
+    checkAndApplyTabBlock(tabId, tab.url, tab.title || '');
+  }
+});
+
+chrome.tabs.onActivated.addListener((activeInfo) => {
+  chrome.tabs.get(activeInfo.tabId, (tab) => {
+    if (tab && tab.url) {
+      checkAndApplyTabBlock(activeInfo.tabId, tab.url, tab.title || '');
+    }
+  });
+});
+
+// Window Focus Change Listener
+chrome.windows.onFocusChanged.addListener((windowId) => {
+  if (!config.blockerEnabled || timerState.mode !== 'focus' || !timerState.isRunning) {
+    return;
+  }
+  
+  if (windowId === chrome.windows.WINDOW_ID_NONE) {
+    return;
+  } else {
+    chrome.tabs.query({ active: true, windowId: windowId }, (tabs) => {
+      if (tabs && tabs[0] && tabs[0].url) {
+        const category = getTabRelevanceCategory(tabs[0].url, tabs[0].title || '');
+        
+        if (category === 'neutral') {
+          activeBlockerTabs.delete(tabs[0].id);
+          if (isDistracted) {
+            console.log('[Blocker] Returned to non-blocklisted tab. Triggering YES.');
+            isDistracted = false;
+            playAudio('assets/YES.m4a');
+            const lang = config.lang || 'zh';
+            const welcomeMsg = lang === 'en' ? NOTIFICATIONS.en.welcome_back : NOTIFICATIONS.zh.welcome_back;
+            sendTabMessage(tabs[0].id, {
+              type: 'INJECT_NOTIFICATION',
+              asset: 'YES',
+              message: welcomeMsg,
+              motion: 'peek'
+            });
+          }
+        } else {
+          activeBlockerTabs.add(tabs[0].id);
+          const assetName = Math.random() > 0.5 ? 'NO' : 'NO2';
+          
+          sendTabMessage(tabs[0].id, {
+            type: 'INJECT_BLOCKER',
+            asset: assetName,
+            message: config.blockMsg,
+            motion: 'alert'
+          });
+
+          if (!isDistracted) {
+            isDistracted = true;
+            playAudio(`assets/${assetName}.m4a`);
+          }
+        }
+      }
+    });
+  }
+});
+
+function checkAndApplyTabBlock(tabId, url, title) {
+  if (!config.blockerEnabled || timerState.mode !== 'focus' || !timerState.isRunning) {
+    return;
+  }
+
+  try {
+    const category = getTabRelevanceCategory(url, title);
+    
+    if (category === 'neutral') {
+      activeBlockerTabs.delete(tabId);
+      
+      if (isDistracted) {
+        console.log(`[Blocker] Switched to non-blocklisted tab. Triggering YES.`);
+        isDistracted = false;
+        playAudio('assets/YES.m4a');
+        const lang = config.lang || 'zh';
+        const welcomeMsg = lang === 'en' ? NOTIFICATIONS.en.welcome_back : NOTIFICATIONS.zh.welcome_back;
+        sendTabMessage(tabId, {
+          type: 'INJECT_NOTIFICATION',
+          asset: 'YES',
+          message: welcomeMsg,
+          motion: 'peek'
+        });
+      }
+    } else {
+      activeBlockerTabs.add(tabId);
+      const assetName = Math.random() > 0.5 ? 'NO' : 'NO2';
+      const warningMsg = config.blockMsg;
       
       sendTabMessage(tabId, {
         type: 'INJECT_BLOCKER',
@@ -376,15 +490,13 @@ chrome.alarms.onAlarm.addListener((alarm) => {
         motion: 'alert'
       });
 
-      // Play audio ONLY when transitioning from work/neutral to distracted state
       if (!isDistracted) {
-        console.log(`[Blocker] State transition to Distracted: ${url}. Playing audio.`);
         isDistracted = true;
         playAudio(`assets/${assetName}.m4a`);
       }
     }
   } catch (e) {
-    // Ignore invalid URLs
+    // Ignore
   }
 }
 
@@ -393,7 +505,6 @@ function sendTabMessage(tabId, msg) {
   chrome.tabs.get(tabId, (tab) => {
     if (chrome.runtime.lastError || !tab || !tab.url) return;
     
-    // Prevent script injection on system browser pages (which Chrome forbids for security)
     const url = tab.url.toLowerCase();
     if (
       url.startsWith('chrome://') ||
@@ -444,7 +555,6 @@ function injectOverlayToActiveTab(asset, msg, options = {}) {
 function clearAllBlockers() {
   for (const tabId of activeBlockerTabs) {
     chrome.tabs.sendMessage(tabId, { type: 'CLEAR_BLOCKER' }, () => {
-      // Ignore error if receiving end does not exist (tab closed or reloaded)
       if (chrome.runtime.lastError) {}
     });
   }
@@ -469,9 +579,8 @@ async function playAudio(soundFile) {
       await chrome.offscreen.createDocument({
         url: 'offscreen.html',
         reasons: ['AUDIO_PLAYBACK'],
-        justification: 'Play notification sound when timer ends or website is blocked'
+        justification: 'Play sound notifications'
       });
-      // Wait for the offscreen document script to load and register listener
       await new Promise(resolve => setTimeout(resolve, 100));
     } catch (e) {
       console.log('[Audio] Suppressed duplicate offscreen document creation:', e.message);
@@ -484,21 +593,17 @@ async function playAudio(soundFile) {
   }, (response) => {
     if (chrome.runtime.lastError) {
       const errMsg = chrome.runtime.lastError.message;
-      // Only retry if it is actually a cold startup latency error
       if (errMsg.includes("Could not establish connection") || errMsg.includes("Receiving end does not exist")) {
-        console.log('[Audio] Offscreen cold startup latency. Retrying message...');
         setTimeout(() => {
           chrome.runtime.sendMessage({
             type: 'PLAY_AUDIO',
             file: absoluteUrl
           }, () => {
             if (chrome.runtime.lastError) {
-              console.error('[Audio] Offscreen playback failed after retry:', chrome.runtime.lastError.message);
+              console.error('[Audio] Playback failed after retry:', chrome.runtime.lastError.message);
             }
           });
         }, 150);
-      } else {
-        console.log('[Audio] Handled message callback:', errMsg);
       }
     }
   });
