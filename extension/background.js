@@ -14,7 +14,8 @@ let config = {
   enabledDefaultDistractions: ['video', 'social', 'shorts'],
   blockMsg: 'Mando, 快回去工作！这不是正道！',
   blockerEnabled: true,
-  soundEnabled: true
+  soundEnabled: true,
+  lang: 'zh'
 };
 
 const DEFAULT_DISTRACTION_GROUPS = {
@@ -30,16 +31,39 @@ const DEFAULT_DISTRACTION_GROUPS = {
 let isDistracted = false;
 let activeBlockerTabs = new Set();
 
-// Random emotional event scheduler
-const RANDOM_EVENTS = [
+// Random emotional event lists
+const RANDOM_EVENTS_ZH = [
   { asset: 'cookie1', message: '哇，古古在啃零食！快回来继续工作，一起努力吧～ 🍪' },
   { asset: 'cookie2', message: '古古正在大口享用蓝色饼干，你的代码是它最好的陪伴！ 🍬' },
   { asset: 'meat',    message: '古古在烤肉串串！香味飘来，继续努力，Mando！🍖' },
   { asset: 'eggs',    message: '古古发现了神秘的蛙卵... 它在思考，你也在吗？🐸' },
   { asset: 'peek',    message: '古古正在暗中观察... 瞅瞅你有没有认真工作！👀' },
-  { asset: 'fagong',  message: '古古正在发功... 原力充能中！' },
+  { asset: 'fagong',  message: '古古正在发功... 原力充能中！ ✨' },
   { asset: 'zhaoshou', message: '古古在向你热情地招手！原力与你同在，打起精神来～👋' }
 ];
+
+const RANDOM_EVENTS_EN = [
+  { asset: 'cookie1', message: 'Wow, Grogu is snacking! Get back to work and let\'s work hard together~ 🍪' },
+  { asset: 'cookie2', message: 'Grogu is enjoying blue cookies. Your code is its best companion! 🍬' },
+  { asset: 'meat',    message: 'Grogu is grilling meat skewers! Smells good, keep going, Mando! 🍖' },
+  { asset: 'eggs',    message: 'Grogu found mysterious frog eggs... It is thinking, are you? 🐸' },
+  { asset: 'peek',    message: 'Grogu is watching you in the dark... Checking if you are working hard! 👀' },
+  { asset: 'fagong',  message: 'Grogu is using the Force... Charging up! ✨' },
+  { asset: 'zhaoshou', message: 'Grogu is waving at you warmly! May the Force be with you, cheer up~ 👋' }
+];
+
+const NOTIFICATIONS = {
+  zh: {
+    focus_ended: 'Mando, 专注时间结束啦！来喝口热汤休息一下！',
+    break_ended: '休息时间结束！原力与你同在，开始工作！',
+    welcome_back: 'Mando, 欢迎回来！This is the way.'
+  },
+  en: {
+    focus_ended: 'Mando, focus session completed! Time to drink some soup and take a break! 🍲',
+    break_ended: 'Break session completed! May the Force be with you, back to work! 🚀',
+    welcome_back: 'Mando, welcome back! This is the way.'
+  }
+};
 let initPromise = null;
 
 // Initialize settings and sync on startup
@@ -75,7 +99,8 @@ if (chrome.commands && chrome.commands.onCommand) {
   chrome.commands.onCommand.addListener((command) => {
     if (command !== 'summon-grogu') return;
 
-    const event = RANDOM_EVENTS[Math.floor(Math.random() * RANDOM_EVENTS.length)];
+    const list = (config.lang === 'en') ? RANDOM_EVENTS_EN : RANDOM_EVENTS_ZH;
+    const event = list[Math.floor(Math.random() * list.length)];
     console.log(`[Shortcut] Summoning Grogu via command: ${event.asset}`);
     triggerRandomEvent(event);
   });
@@ -92,6 +117,7 @@ function init() {
     blockMsg: 'Mando, 快回去工作！这不是正道！',
     blockerEnabled: true,
     soundEnabled: true,
+    lang: 'zh',
     timerState: null
   }, (items) => {
     config.focusDuration = items.focusDuration;
@@ -102,6 +128,7 @@ function init() {
     config.blockMsg = items.blockMsg;
     config.blockerEnabled = items.blockerEnabled;
     config.soundEnabled = items.soundEnabled;
+    config.lang = items.lang || 'zh';
 
     isDistracted = false;
 
@@ -247,8 +274,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   else if (message.type === 'TRIGGER_RANDOM_EVENT') {
     const eventName = message.asset;
-    const event = RANDOM_EVENTS.find(e => e.asset === eventName)
-      || RANDOM_EVENTS[Math.floor(Math.random() * RANDOM_EVENTS.length)];
+    const list = (config.lang === 'en') ? RANDOM_EVENTS_EN : RANDOM_EVENTS_ZH;
+    const event = list.find(e => e.asset === eventName)
+      || list[Math.floor(Math.random() * list.length)];
     triggerRandomEvent(event);
     sendResponse({ ok: true });
   }
@@ -266,7 +294,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       enabledDefaultDistractions: ['video', 'social', 'shorts'],
       blockMsg: 'Mando, 快回去工作！这不是正道！',
       blockerEnabled: true,
-      soundEnabled: true
+      soundEnabled: true,
+      lang: 'zh'
     }, (items) => {
       config.focusDuration = items.focusDuration;
       config.breakDuration = items.breakDuration;
@@ -276,6 +305,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       config.blockMsg = items.blockMsg;
       config.blockerEnabled = items.blockerEnabled;
       config.soundEnabled = items.soundEnabled;
+      config.lang = items.lang || 'zh';
       
       if (!timerState.isRunning) {
         timerState.timeLeft = (timerState.mode === 'focus' ? config.focusDuration : config.breakDuration) * 60;
@@ -332,130 +362,12 @@ chrome.alarms.onAlarm.addListener((alarm) => {
     if (timerState.mode === 'focus') {
       console.log('Focus completed! Triggering break warning.');
       playAudio('assets/soup.m4a');
-      injectOverlayToActiveTab('soup', 'Mando, 专注时间结束啦！来喝口热汤休息一下！');
+      const lang = config.lang || 'zh';
+      const msg = lang === 'en' ? NOTIFICATIONS.en.focus_ended : NOTIFICATIONS.zh.focus_ended;
+      injectOverlayToActiveTab('soup', msg);
       
       timerState.mode = 'break';
       timerState.timeLeft = config.breakDuration * 60;
-    } else {
-      console.log('Break completed! Triggering focus warning.');
-      playAudio('assets/force.m4a');
-      injectOverlayToActiveTab('force', '休息时间结束！原力与你同在，开始工作！');
-      
-      timerState.mode = 'focus';
-      timerState.timeLeft = config.focusDuration * 60;
-    }
-    
-    saveState();
-    chrome.runtime.sendMessage({ type: 'TIMER_TICK', state: timerState });
-  } else if (alarm.name === 'grogu_random_event') {
-    if (timerState.isRunning && timerState.mode === 'focus') {
-      const event = RANDOM_EVENTS[Math.floor(Math.random() * RANDOM_EVENTS.length)];
-      triggerRandomEvent(event);
-      scheduleNextRandomEvent(); // Reschedule next
-    }
-  }
-});
-
-// 1. Browser tab navigation listeners
-chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-  // If tab starts loading a new page, reset its blocker state for fresh evaluation
-  if (changeInfo.status === 'loading') {
-    activeBlockerTabs.delete(tabId);
-    return;
-  }
-  
-  // Only evaluate when the tab is fully ready (tab.status is complete)
-  // This catches both fresh page loads (status complete) and SPA URL changes (changeInfo.url)
-  if (tab.status === 'complete' && (changeInfo.status === 'complete' || changeInfo.url) && tab.url) {
-    checkAndApplyTabBlock(tabId, tab.url, tab.title || '');
-  }
-});
-
-chrome.tabs.onActivated.addListener((activeInfo) => {
-  chrome.tabs.get(activeInfo.tabId, (tab) => {
-    if (tab && tab.url) {
-      checkAndApplyTabBlock(activeInfo.tabId, tab.url, tab.title || '');
-    }
-  });
-});
-
-// 2. Window Focus Change Listener (Detect switching OUT of the browser)
-chrome.windows.onFocusChanged.addListener((windowId) => {
-  if (!config.blockerEnabled || timerState.mode !== 'focus' || !timerState.isRunning) {
-    return;
-  }
-  
-  if (windowId === chrome.windows.WINDOW_ID_NONE) {
-    // Leaving the browser is not necessarily distraction. Stay quiet.
-    return;
-  } else {
-    // User returned to Chrome
-    chrome.tabs.query({ active: true, windowId: windowId }, (tabs) => {
-      if (tabs && tabs[0] && tabs[0].url) {
-        const category = getTabRelevanceCategory(tabs[0].url, tabs[0].title || '');
-        
-        if (category === 'neutral') {
-          activeBlockerTabs.delete(tabs[0].id);
-          if (isDistracted) {
-            console.log('[Blocker] Returned to non-blocklisted tab. Triggering YES.');
-            isDistracted = false;
-            playAudio('assets/YES.m4a');
-            sendTabMessage(tabs[0].id, {
-              type: 'INJECT_NOTIFICATION',
-              asset: 'YES',
-              message: `Mando, 欢迎回来！This is the way.`,
-              motion: 'peek'
-            });
-          }
-        } else {
-          // Returned to Chrome but the active tab is unrelated. Always show blocker.
-          activeBlockerTabs.add(tabs[0].id);
-          const assetName = Math.random() > 0.5 ? 'NO' : 'NO2';
-          
-          sendTabMessage(tabs[0].id, {
-            type: 'INJECT_BLOCKER',
-            asset: assetName,
-            message: config.blockMsg,
-            motion: 'alert'
-          });
-
-          if (!isDistracted) {
-            isDistracted = true;
-            playAudio(`assets/${assetName}.m4a`);
-          }
-        }
-      }
-    });
-  }
-});
-
-function checkAndApplyTabBlock(tabId, url, title) {
-  if (!config.blockerEnabled || timerState.mode !== 'focus' || !timerState.isRunning) {
-    return;
-  }
-
-  try {
-    const category = getTabRelevanceCategory(url, title);
-    
-    if (category === 'neutral') {
-      activeBlockerTabs.delete(tabId);
-      
-      if (isDistracted) {
-        console.log(`[Blocker] Switched to non-blocklisted tab: ${url}. Triggering YES.`);
-        isDistracted = false;
-        playAudio('assets/YES.m4a');
-        sendTabMessage(tabId, {
-          type: 'INJECT_NOTIFICATION',
-          asset: 'YES',
-          message: `Mando, 欢迎回来！This is the way.`,
-          motion: 'peek'
-        });
-      }
-    } else {
-      // Always add to active blocker list and display overlay on target unrelated tab
-      activeBlockerTabs.add(tabId);
-      const assetName = Math.random() > 0.5 ? 'NO' : 'NO2';
-      const warningMsg = config.blockMsg;
       
       sendTabMessage(tabId, {
         type: 'INJECT_BLOCKER',

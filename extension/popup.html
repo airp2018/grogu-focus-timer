@@ -12,9 +12,12 @@
     <header class="header">
       <div class="logo-area">
         <div class="grogu-icon-mini"></div>
-        <h1>原力专注 <span>GROGU</span></h1>
+        <h1 id="title-text">原力专注 <span>GROGU</span></h1>
       </div>
-      <div class="status-indicator" id="status-text">就绪</div>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <button id="lang-btn" class="btn-lang" title="切换语言 / Switch Language">EN</button>
+        <div class="status-indicator" id="status-text">就绪</div>
+      </div>
     </header>
 
     <!-- Timer Dashboard -->
@@ -37,52 +40,52 @@
 
     <!-- Settings Tabs -->
     <section class="settings-section">
-      <div class="settings-header">配置面板</div>
+      <div id="config-header" class="settings-header">配置面板</div>
       
       <div class="form-group">
-        <label>专注时长 (分钟)</label>
+        <label id="focus-time-label">专注时长 (分钟)</label>
         <input type="number" id="focus-time-input" min="1" max="120" value="25">
       </div>
 
       <div class="form-group">
-        <label>休息时长 (分钟)</label>
+        <label id="break-time-label">休息时长 (分钟)</label>
         <input type="number" id="break-time-input" min="1" max="60" value="5">
       </div>
 
       <div class="form-group">
-        <label>我当前要做的任务 (当前专注内容)</label>
+        <label id="task-label">我当前要做的任务 (当前专注内容)</label>
         <input type="text" id="task-input" value="写代码" placeholder="例如：写代码、写论文、看书">
       </div>
 
       <div class="form-group">
-        <label>默认分心黑名单</label>
+        <label id="blacklist-label">默认分心黑名单</label>
         <div class="blacklist-grid">
-          <label><input type="checkbox" class="default-blacklist-toggle" value="video"> 视频/短剧</label>
-          <label><input type="checkbox" class="default-blacklist-toggle" value="social"> 社交媒体</label>
-          <label><input type="checkbox" class="default-blacklist-toggle" value="shorts"> 短视频关键词</label>
-          <label><input type="checkbox" class="default-blacklist-toggle" value="games"> 游戏/直播</label>
-          <label><input type="checkbox" class="default-blacklist-toggle" value="forums"> 论坛热点</label>
-          <label><input type="checkbox" class="default-blacklist-toggle" value="shopping"> 购物网站</label>
+          <label><input type="checkbox" class="default-blacklist-toggle" value="video"> <span id="lbl-blacklist-video">视频/短剧</span></label>
+          <label><input type="checkbox" class="default-blacklist-toggle" value="social"> <span id="lbl-blacklist-social">社交媒体</span></label>
+          <label><input type="checkbox" class="default-blacklist-toggle" value="shorts"> <span id="lbl-blacklist-shorts">短视频关键词</span></label>
+          <label><input type="checkbox" class="default-blacklist-toggle" value="games"> <span id="lbl-blacklist-games">游戏/直播</span></label>
+          <label><input type="checkbox" class="default-blacklist-toggle" value="forums"> <span id="lbl-blacklist-forums">论坛热点</span></label>
+          <label><input type="checkbox" class="default-blacklist-toggle" value="shopping"> <span id="lbl-blacklist-shopping">购物网站</span></label>
         </div>
       </div>
 
       <div class="form-group">
-        <label>自定义分心关键词 / 正则 (一行一个)</label>
+        <label id="custom-blacklist-label">自定义分心关键词 / 正则 (一行一个)</label>
         <textarea id="distraction-patterns-input" rows="4" placeholder="youtube.com&#10;bilibili.com&#10;.*shorts.*"></textarea>
       </div>
 
       <div class="form-group">
-        <label>劝阻提示语 (当你想偷懒分心时)</label>
+        <label id="block-msg-label">劝阻提示语 (当你想偷懒分心时)</label>
         <input type="text" id="block-msg-input" value="Mando, 快回去工作！这不是正道！">
       </div>
       
       <div class="form-group toggle-group">
-        <label for="blocker-toggle">启用分心自动劝阻 (YES / NO 联动)</label>
+        <label id="blocker-toggle-label" for="blocker-toggle">启用分心自动劝阻 (YES / NO 联动)</label>
         <input type="checkbox" id="blocker-toggle" checked>
       </div>
 
       <div class="form-group toggle-group">
-        <label for="sound-toggle">启用声音提醒</label>
+        <label id="sound-toggle-label" for="sound-toggle">启用声音提醒</label>
         <input type="checkbox" id="sound-toggle" checked>
       </div>
 
@@ -91,8 +94,8 @@
 
     <!-- Emotional Events Test Panel -->
     <section class="settings-section test-panel">
-      <div class="settings-header">召唤古古</div>
-      <p class="test-hint">点击左侧召唤。全局召唤：Alt+Shift+G；右侧是网页内快捷键（chrome:// 页面不可用）。</p>
+      <div id="summon-header" class="settings-header">召唤古古</div>
+      <p id="summon-hint" class="test-hint">点击左侧召唤。全局召唤：Alt+Shift+G；右侧是网页内快捷键（chrome:// 页面不可用）。</p>
       <div class="summon-list">
         <div class="summon-row">
           <button id="ev-cookie1" class="btn btn-event" data-asset="cookie1" title="古古吃马卡龙">🍪 吃点马卡龙吧</button>
