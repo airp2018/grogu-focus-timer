@@ -145,30 +145,33 @@ function createGroguAssistant(assetName, messageText, options = {}) {
 
     if (motion === 'drift') {
       clickCount++;
-      if (clickCount === 1) {
-        // First click: Pop up the Mando dry-rice reminder bubble
-        speechBubble.textContent = '家里没米了，Mando  快干活！';
-        container.classList.remove('grogu-fa-no-bubble');
-        speechBubble.classList.remove('grogu-fa-bubble-click-pop');
-        void speechBubble.offsetWidth;
-        speechBubble.classList.add('grogu-fa-bubble-click-pop');
-      } else {
-        // Subsequent clicks: Play random interactive audio and show uniform response subtitle
-        const randomSound = INTERACTIVE_SOUNDS[Math.floor(Math.random() * INTERACTIVE_SOUNDS.length)];
-        speechBubble.textContent = '原力与我们同在！';
-        
-        speechBubble.classList.remove('grogu-fa-bubble-click-pop');
-        void speechBubble.offsetWidth;
-        speechBubble.classList.add('grogu-fa-bubble-click-pop');
-        
-        // Play the custom reaction audio in background
-        chrome.runtime.sendMessage({
-          type: 'PLAY_INTERACTION_AUDIO',
-          sound: randomSound
-        }, () => {
-          if (chrome.runtime.lastError) {} // Ignore
-        });
-      }
+      chrome.storage.local.get({ lang: 'zh' }, (data) => {
+        const isEn = data.lang === 'en';
+        if (clickCount === 1) {
+          // First click: Pop up the Mando dry-rice reminder bubble
+          speechBubble.textContent = isEn ? 'No rice left at home, Mando, get to work!' : '家里没米了，Mando  快干活！';
+          container.classList.remove('grogu-fa-no-bubble');
+          speechBubble.classList.remove('grogu-fa-bubble-click-pop');
+          void speechBubble.offsetWidth;
+          speechBubble.classList.add('grogu-fa-bubble-click-pop');
+        } else {
+          // Subsequent clicks: Play random interactive audio and show uniform response subtitle
+          const randomSound = INTERACTIVE_SOUNDS[Math.floor(Math.random() * INTERACTIVE_SOUNDS.length)];
+          speechBubble.textContent = isEn ? 'May the Force be with us!' : '原力与我们同在！';
+          
+          speechBubble.classList.remove('grogu-fa-bubble-click-pop');
+          void speechBubble.offsetWidth;
+          speechBubble.classList.add('grogu-fa-bubble-click-pop');
+          
+          // Play the custom reaction audio in background
+          chrome.runtime.sendMessage({
+            type: 'PLAY_INTERACTION_AUDIO',
+            sound: randomSound
+          }, () => {
+            if (chrome.runtime.lastError) {} // Ignore
+          });
+        }
+      });
     }
   });
 

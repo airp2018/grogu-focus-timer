@@ -241,6 +241,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       chrome.alarms.create('grogu_alarm', { when: timerState.targetTime });
       scheduleNextRandomEvent();
       console.log(`Timer started. Alarm set for: ${new Date(timerState.targetTime).toLocaleTimeString()}`);
+      
+      // Evaluate distraction blocker immediately on timer start
+      checkActiveTabBlock();
     }
     sendResponse(timerState);
   }
@@ -311,6 +314,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       if (!timerState.isRunning) {
         timerState.timeLeft = (timerState.mode === 'focus' ? config.focusDuration : config.breakDuration) * 60;
         saveState();
+      } else {
+        // Re-evaluate current active page distraction state under new settings
+        checkActiveTabBlock();
       }
       sendResponse(timerState);
     });
@@ -454,6 +460,14 @@ chrome.windows.onFocusChanged.addListener((windowId) => {
   }
 });
 
+function checkActiveTabBlock() {
+  chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
+    if (tabs && tabs[0] && tabs[0].url) {
+      checkAndApplyTabBlock(tabs[0].id, tabs[0].url, tabs[0].title || '');
+    }
+  });
+}
+
 function checkAndApplyTabBlock(tabId, url, title) {
   if (!config.blockerEnabled || timerState.mode !== 'focus' || !timerState.isRunning) {
     return;
@@ -466,7 +480,7 @@ function checkAndApplyTabBlock(tabId, url, title) {
       activeBlockerTabs.delete(tabId);
       
       if (isDistracted) {
-        console.log(`[Blocker] Switched to non-blocklisted tab. Triggering YES.`);
+        console.log(`[Blocker] Switched to non-blocklisted tab ${tabId} (${url}). Triggering YES.`);
         isDistracted = false;
         playAudio('assets/YES.m4a');
         const lang = config.lang || 'zh';
@@ -479,6 +493,7 @@ function checkAndApplyTabBlock(tabId, url, title) {
         });
       }
     } else {
+      console.log(`[Blocker] Tab ${tabId} matches distraction pattern (${url}). Triggering NO.`);
       activeBlockerTabs.add(tabId);
       const assetName = Math.random() > 0.5 ? 'NO' : 'NO2';
       const warningMsg = config.blockMsg;
