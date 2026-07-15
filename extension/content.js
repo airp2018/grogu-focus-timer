@@ -28,6 +28,29 @@ function chooseDefaultMotion(assetName) {
   return 'dock';
 }
 
+const INTERACTIVE_SOUNDS = [
+  'interact_shout.mp3',
+  'interact_cry.mp3',
+  'interact_groan1.mp3',
+  'interact_groan2.mp3',
+  'interact_laugh1.mp3',
+  'interact_laugh2.mp3',
+  'interact_new01.mp3',
+  'interact_new02.mp3',
+  'interact_new03.mp3',
+  'interact_new04.mp3',
+  'interact_new05.mp3',
+  'interact_new06.mp3',
+  'interact_new07.mp3',
+  'interact_new08.mp3',
+  'interact_new09.mp3'
+];
+
+function pickInteractionSound(previousSound) {
+  const candidates = INTERACTIVE_SOUNDS.filter(sound => sound !== previousSound);
+  return candidates[Math.floor(Math.random() * candidates.length)];
+}
+
 function createGroguAssistant(assetName, messageText, options = {}) {
   const motion = options.motion || chooseDefaultMotion(assetName);
   const isRandomEvent = ['cookie1', 'cookie2', 'meat', 'eggs', 'peek', 'fagong', 'zhaoshou'].includes(assetName);
@@ -130,14 +153,7 @@ function createGroguAssistant(assetName, messageText, options = {}) {
 
   // 7. Click avatar to trigger Force Particle Effect and voice interaction
   let clickCount = 0;
-  const INTERACTIVE_SOUNDS = [
-    'interact_shout.mp3',
-    'interact_cry.mp3',
-    'interact_groan1.mp3',
-    'interact_groan2.mp3',
-    'interact_laugh1.mp3',
-    'interact_laugh2.mp3'
-  ];
+  let lastInteractionSound = null;
 
   avatarWrapper.addEventListener('click', (e) => {
     e.stopPropagation();
@@ -145,6 +161,9 @@ function createGroguAssistant(assetName, messageText, options = {}) {
 
     if (motion === 'drift') {
       clickCount++;
+      const randomSound = pickInteractionSound(lastInteractionSound);
+      lastInteractionSound = randomSound;
+
       chrome.storage.local.get({ lang: 'zh' }, (data) => {
         const isEn = data.lang === 'en';
         if (clickCount === 1) {
@@ -156,21 +175,21 @@ function createGroguAssistant(assetName, messageText, options = {}) {
           speechBubble.classList.add('grogu-fa-bubble-click-pop');
         } else {
           // Subsequent clicks: Play random interactive audio and show uniform response subtitle
-          const randomSound = INTERACTIVE_SOUNDS[Math.floor(Math.random() * INTERACTIVE_SOUNDS.length)];
           speechBubble.textContent = isEn ? 'May the Force be with us!' : '原力与我们同在！';
           
           speechBubble.classList.remove('grogu-fa-bubble-click-pop');
           void speechBubble.offsetWidth;
           speechBubble.classList.add('grogu-fa-bubble-click-pop');
           
-          // Play the custom reaction audio in background
-          chrome.runtime.sendMessage({
-            type: 'PLAY_INTERACTION_AUDIO',
-            sound: randomSound
-          }, () => {
-            if (chrome.runtime.lastError) {} // Ignore
-          });
         }
+
+        // Every click plays one local interaction sound, without an immediate repeat.
+        chrome.runtime.sendMessage({
+          type: 'PLAY_INTERACTION_AUDIO',
+          sound: randomSound
+        }, () => {
+          if (chrome.runtime.lastError) {} // Ignore
+        });
       });
     }
   });
